@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Are You on a Team?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --surface: #1a1916;
+    --surface2: #232220;
+    --border: #2e2c29;
+    --text: #f0ede8;
+    --text-muted: #8a8780;
+    --accent: #e8c547;
+    --accent2: #c47a3a;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  .shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* ── INTRO SCREEN ── */
+  #intro {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(232,197,71,0.25);
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 7vw, 68px);
+    line-height: 1.0;
+    color: var(--text);
+    max-width: 580px;
+  }
+
+  h1 em {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .intro-desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    max-width: 520px;
+  }
+
+  .intro-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .meta-value {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .btn-start {
+    margin-top: 8px;
+    background: var(--accent);
+    color: #0f0e0c;
+    border: none;
+    padding: 16px 40px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(232,197,71,0.25);
+  }
+
+  /* ── QUIZ SCREEN ── */
+  #quiz { display: none; }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 52px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .question-wrap {
+    animation: fadeUp 0.45s ease both;
+  }
+
+  .q-number {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 16px;
+  }
+
+  .q-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(22px, 4vw, 32px);
+    line-height: 1.35;
+    color: var(--text);
+    margin-bottom: 44px;
+    max-width: 640px;
+  }
+
+  .scale-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+
+  .scale-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .scale-btn {
+    flex: 1;
+    aspect-ratio: 1;
+    max-width: 64px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scale-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-2px);
+  }
+
+  .scale-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0f0e0c;
+    font-weight: 600;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(232,197,71,0.2);
+  }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 48px;
+  }
+
+  .btn-nav {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 12px 28px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .btn-nav:hover:not(:disabled) {
+    border-color: var(--text-muted);
+    color: var(--text);
+  }
+
+  .btn-nav:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  .btn-next {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 13px 32px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .btn-next.active {
+    opacity: 1;
+    pointer-events: all;
+    background: var(--accent);
+    color: #0f0e0c;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .btn-next.active:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(232,197,71,0.25);
+  }
+
+  /* ── RESULTS SCREEN ── */
+  #results { display: none; }
+
+  .results-header {
+    margin-bottom: 52px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .results-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 5vw, 48px);
+    margin-top: 16px;
+    line-height: 1.1;
+  }
+
+  .results-header h2 span {
+    color: var(--accent);
+  }
+
+  .top-role-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 40px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .top-role-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .role-category {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  .role-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .role-desc {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-muted);
+    max-width: 560px;
+  }
+
+  .role-score-badge {
+    position: absolute;
+    top: 32px; right: 36px;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    border: 1px solid rgba(232,197,71,0.25);
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  .all-roles-title {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 40px 0 20px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .roles-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeUp 0.6s 0.25s ease both;
+  }
+
+  .role-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+
+  .role-row:hover { border-color: var(--border); }
+  .role-row.top { border-color: rgba(232,197,71,0.2); }
+
+  .role-row-name {
+    width: 180px;
+    font-size: 14px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .role-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .role-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--border);
+    transition: width 1s ease, background 0.3s;
+  }
+
+  .role-row.top .role-bar { background: var(--accent); }
+
+  .role-pts {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .role-row.top .role-pts { color: var(--accent); }
+
+  .btn-restart {
+    margin-top: 48px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 13px 32px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.18s;
+    animation: fadeUp 0.6s 0.35s ease both;
+  }
+
+  .btn-restart:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 540px) {
+    .shell { padding: 40px 16px 60px; }
+    .scale-btn { font-size: 13px; }
+    .top-role-card { padding: 28px 24px; }
+    .role-score-badge { display: none; }
+    .role-row-name { width: 140px; font-size: 13px; }
+    .intro-meta { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- INTRO -->
+  <div id="intro">
+    <span class="tag">Team Role Assessment</span>
+    <h1>Who are you<br>on a <em>team?</em></h1>
+    <p class="intro-desc">Rate how well each statement describes you. There are no right or wrong answers — just honest ones. You'll discover your dominant team role from 9 archetypes.</p>
+    <div class="intro-meta">
+      <div class="meta-item">
+        <span class="meta-label">Questions</span>
+        <span class="meta-value">27</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Scale</span>
+        <span class="meta-value">1–10</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Roles</span>
+        <span class="meta-value">9</span>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">Start →</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-count" id="progressCount">1 / 27</span>
+    </div>
+    <div class="question-wrap" id="questionWrap">
+      <div class="q-number" id="qNumber">Question 01</div>
+      <div class="q-text" id="qText"></div>
+      <div class="scale-wrap">
+        <div class="scale-labels">
+          <span>Doesn't describe me</span>
+          <span>Perfectly describes me</span>
+        </div>
+        <div class="scale-buttons" id="scaleButtons"></div>
+      </div>
+      <div class="nav-row">
+        <button class="btn-nav" id="btnPrev" onclick="goTo(current - 1)" disabled>← Back</button>
+        <button class="btn-next" id="btnNext" onclick="advance()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="results-header">
+      <span class="tag">Your Result</span>
+      <h2>You're a<br><span id="resultRoleName">—</span></h2>
+    </div>
+    <div class="top-role-card">
+      <div class="role-category" id="resultCategory"></div>
+      <div class="role-name" id="resultRoleName2"></div>
+      <div class="role-desc" id="resultDesc"></div>
+      <div class="role-score-badge" id="resultBadge"></div>
+    </div>
+    <div class="all-roles-title">All scores</div>
+    <div class="roles-grid" id="rolesGrid"></div>
+    <button class="btn-restart" onclick="restart()">↺ Take it again</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  "I enjoy coming up with new ideas and proposing creative solutions.",
+  "I objectively evaluate proposals and identify their strengths and weaknesses.",
+  "I consider myself an expert in my field and dive deep into specialized tasks.",
+  "I am skilled at coordinating team efforts and helping colleagues achieve goals.",
+  "I strive to maintain harmony and a positive atmosphere within the team.",
+  "I actively seek new opportunities and resources outside the team.",
+  "I like to develop plans and organize processes to accomplish them.",
+  "I push the team to take action and am not afraid to make decisions under pressure.",
+  "I meticulously check details and complete tasks with maximum precision.",
+  "I try to consider everyone's opinions and support the team's morale.",
+  "I easily adapt to changes and suggest new approaches in unconventional situations.",
+  "I prefer to analyze a situation before making decisions.",
+  "I focus on task completion and manage time efficiently.",
+  "I tend to find compromises and strive for consensus within the group.",
+  "I actively work to ensure every team member feels comfortable.",
+  "I am willing to take on challenging tasks and motivate others.",
+  "I enjoy working on details and ensuring they meet the standards.",
+  "I strive for excellence in my work and constantly seek ways to improve.",
+  "I prefer to work alone, especially when tackling complex problems.",
+  "I effectively manage stress and maintain a high level of energy within the team.",
+  "I am often the source of original concepts and novel approaches to challenges.",
+  "I weigh all evidence and information carefully before drawing conclusions.",
+  "I focus on continuously expanding my specialized knowledge and refining my expertise.",
+  "I clarify the team's objectives and ensure everyone understands their roles.",
+  "I frequently engage with external contacts to bring fresh insights to our projects.",
+  "I methodically transform ideas into practical, structured solutions.",
+  "I maintain enthusiasm and energy when exploring potential partnerships or resources."
+];
+
+// Role → question indices (0-based)
+const roleMap = {
+  "Plant":               [0, 10, 20],
+  "Monitor Evaluator":   [1, 11, 21],
+  "Specialist":          [2, 18, 22],
+  "Coordinator":         [3, 9,  23],
+  "Teamworker":          [4, 13, 14],
+  "Resource Investigator":[5, 24, 26],
+  "Implementer":         [6, 25, 12],
+  "Completer Finisher":  [8, 17, 16],
+  "Shaper":              [7, 19, 15]
+};
+
+const roleInfo = {
+  "Plant": {
+    category: "Thought",
+    desc: "Creative, imaginative, and free-thinking. Plants generate original ideas and solve difficult problems — but can be distracted and absent-minded when it comes to practical details."
+  },
+  "Monitor Evaluator": {
+    category: "Thought",
+    desc: "Sober, strategic, and discerning. Monitor Evaluators judge options accurately and see the full picture — they rarely get excited, but they rarely get it wrong either."
+  },
+  "Specialist": {
+    category: "Thought",
+    desc: "Single-minded, self-starting, and dedicated. Specialists bring rare knowledge and deep expertise, though they tend to focus narrowly on their area and can overlook the bigger picture."
+  },
+  "Coordinator": {
+    category: "People",
+    desc: "Mature, confident, and collaborative. Coordinators clarify goals and promote decision-making — they delegate effectively and help the team stay aligned toward shared objectives."
+  },
+  "Teamworker": {
+    category: "People",
+    desc: "Cooperative, perceptive, and diplomatic. Teamworkers listen, build bridges, and avert friction — they keep morale high and ensure no one feels left behind."
+  },
+  "Resource Investigator": {
+    category: "People",
+    desc: "Outgoing, enthusiastic, and communicative. Resource Investigators explore opportunities and develop contacts — they bring energy and ideas from outside, though enthusiasm can fade."
+  },
+  "Implementer": {
+    category: "Action",
+    desc: "Practical, reliable, and efficient. Implementers turn ideas into actions and organize work that needs to be done — disciplined and methodical, they may resist unproven ideas."
+  },
+  "Completer Finisher": {
+    category: "Action",
+    desc: "Painstaking, conscientious, and anxious to get things right. Completer Finishers search for errors and polish the final result — they ensure nothing is overlooked."
+  },
+  "Shaper": {
+    category: "Action",
+    desc: "Challenging, dynamic, and driven. Shapers thrive under pressure and have the courage to overcome obstacles — they can be provocative, but they get things moving."
+  }
+};
+
+const answers = new Array(27).fill(null);
+let current = 0;
+
+function startQuiz() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const wrap = document.getElementById('questionWrap');
+  wrap.style.animation = 'none';
+  wrap.offsetHeight; // reflow
+  wrap.style.animation = 'fadeUp 0.4s ease both';
+
+  document.getElementById('qNumber').textContent = `Question ${String(current + 1).padStart(2, '0')}`;
+  document.getElementById('qText').textContent = questions[current];
+
+  const pct = ((current) / 27) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').textContent = `${current + 1} / 27`;
+
+  const btnPrev = document.getElementById('btnPrev');
+  btnPrev.disabled = current === 0;
+
+  const container = document.getElementById('scaleButtons');
+  container.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn' + (answers[current] === i ? ' selected' : '');
+    btn.textContent = i;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  }
+
+  updateNextBtn();
+}
+
+function selectAnswer(val) {
+  answers[current] = val;
+  document.querySelectorAll('.scale-btn').forEach((btn, idx) => {
+    btn.classList.toggle('selected', idx + 1 === val);
+  });
+  updateNextBtn();
+}
+
+function updateNextBtn() {
+  const btn = document.getElementById('btnNext');
+  const answered = answers[current] !== null;
+  btn.classList.toggle('active', answered);
+  if (current === 26 && answered) btn.textContent = 'See results →';
+  else btn.textContent = 'Next →';
+}
+
+function advance() {
+  if (answers[current] === null) return;
+  if (current === 26) { showResults(); return; }
+  goTo(current + 1);
+}
+
+function goTo(idx) {
+  if (idx < 0 || idx > 26) return;
+  current = idx;
+  renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const scores = {};
+  for (const [role, indices] of Object.entries(roleMap)) {
+    scores[role] = indices.reduce((sum, i) => sum + (answers[i] || 0), 0);
+  }
+
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [topRole, topScore] = sorted[0];
+  const maxPossible = 30;
+
+  document.getElementById('resultRoleName').textContent = topRole;
+  document.getElementById('resultRoleName2').textContent = topRole;
+  document.getElementById('resultCategory').textContent = roleInfo[topRole].category + ' role';
+  document.getElementById('resultDesc').textContent = roleInfo[topRole].desc;
+  document.getElementById('resultBadge').textContent = `${topScore} / ${maxPossible} pts`;
+
+  const grid = document.getElementById('rolesGrid');
+  grid.innerHTML = '';
+  const maxScore = sorted[0][1] || 1;
+
+  sorted.forEach(([role, score], i) => {
+    const row = document.createElement('div');
+    row.className = 'role-row' + (i === 0 ? ' top' : '');
+    row.innerHTML = `
+      <div class="role-row-name">${role}</div>
+      <div class="role-bar-wrap">
+        <div class="role-bar" style="width: 0%" data-w="${(score / maxPossible * 100).toFixed(1)}"></div>
+      </div>
+      <div class="role-pts">${score}</div>
+    `;
+    grid.appendChild(row);
+  });
+
+  // Animate bars in
+  setTimeout(() => {
+    document.querySelectorAll('.role-bar').forEach(bar => {
+      bar.style.width = bar.dataset.w + '%';
+    });
+  }, 100);
+}
+
+function restart() {
+  answers.fill(null);
+  current = 0;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('intro').style.display = 'flex';
+}
+</script>
+</body>
+</html>
